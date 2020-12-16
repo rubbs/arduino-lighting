@@ -4,40 +4,66 @@
     <title>ESP8266 Web Server POST handling</title>
     <style>
         body {
-            background-color: #cccccc;
             font-family: Arial, Helvetica, Sans-Serif;
             Color: #000088;
+        }
+
+        /* Style the label to display next to the inputs */
+        label {
+            padding: 12px 12px 12px 0;
+            display: inline-block;
+        }
+
+        /* Style the container */
+        .container {
+            border-radius: 5px;
+            background-color: #f2f2f2;
+            padding: 20px;
+        }
+
+        /* Style inputs, select elements and textareas */
+        input[type=range],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>Controlling the led</h1><br>
-    <form method="post" enctype="application/x-www-form-urlencoded" action="/postform/" id="form">
-        <label for="brightness">brightness:</label><br>
-        <div>
-            <input id="brightness" type="range" min="1" max="255" name="brightness" value="255"><br>
-        </div>
+    <div class="container">
+        <h1>Controlling the led</h1><br>
+        <form method="post" enctype="application/x-www-form-urlencoded" action="/postform/" id="form">
+            <label for="brightness">brightness:</label><br>
+            <div>
+                <input id="brightness" type="range" min="1" max="255" name="brightness" value="255"><br>
+            </div>
 
-        <label for="color">Color:</label><br>
-        <div>
-            <input id="color" type="color" name="color">
-        </div>
-    </form>
+            <label for="color">Color:</label><br>
+            <div>
+                <input id="color" type="color" name="color">
+            </div>
+        </form>
+    </div>
 </body>
 
 <script>
     var slider = document.getElementById("brightness");
     var colorpicker = document.getElementById("color");
 
-    slider.onmouseup = function(){
+    slider.onchange = function () {
         console.log("brightness changed")
-        document.getElementById("form").submit();
+        // document.getElementById("form").submit();
     }
-    colorpicker.onchange = function(){
+    colorpicker.onchange = function () {
         console.log("colorpicker changed");
-        document.getElementById("form").submit();
+        // document.getElementById("form").submit();
     }
 </script>
 
