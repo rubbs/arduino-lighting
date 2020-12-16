@@ -5,6 +5,14 @@
 
 #include <AUnit.h>
 
+#include <EEPROM.h>
+struct {
+  char r;
+  char g;
+  char b;
+  char brightness;
+} PersistenceStruct;
+
 #include "FastLED.h"
 // Fastled constants
 #define DATA_PIN    2
@@ -26,7 +34,9 @@ ESP8266WebServer server(80);
 
 const int led = LED_BUILTIN;
 
-const String postForms = "<html>\n"
+String createIndexPage(char r, char g, char b, char brightness){
+  char buff[2];
+  String postForms = "<html>\n"
 "\n"
 "<head>\n"
 "    <title>ESP8266 Web Server POST handling</title>\n"
@@ -45,12 +55,24 @@ const String postForms = "<html>\n"
 "    <form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"/postform/\" id=\"form\">\n"
 "        <label for=\"brightness\">brightness:</label><br>\n"
 "        <div>\n"
-"            <input id=\"brightness\" type=\"range\" min=\"1\" max=\"255\" name=\"brightness\" value=\"255\"><br>\n"
-"        </div>\n"
+"            <input id=\"brightness\" type=\"range\" min=\"1\" max=\"255\" name=\"brightness\" value=\"";
+  sprintf(buff,"%02x", brightness);
+  postForms.concat(buff);
+  postForms.concat("\"><br>\n");
+
+postForms.concat("        </div>\n"
 "\n"
 "        <label for=\"color\">Color:</label><br>\n"
 "        <div>\n"
-"            <input id=\"color\" type=\"color\" name=\"color\">\n"
+"            <input id=\"color\" type=\"color\" name=\"color\" value=\"#");
+  sprintf(buff,"%02x", r);
+  postForms.concat(buff);
+  sprintf(buff,"%02x", g);
+  postForms.concat(buff);
+  sprintf(buff,"%02x", b);
+  postForms.concat(buff);
+
+postForms.concat("\">\n"
 "        </div>\n"
 "    </form>\n"
 "</body>\n"
@@ -69,10 +91,12 @@ const String postForms = "<html>\n"
 "    }\n"
 "</script>\n"
 "\n"
-"</html>";
+"</html>");
+return postForms;
+}
 
 void handleRoot() {
-  server.send(200, "text/html", postForms);
+  server.send(200, "text/html", createIndexPage(PersistenceStruct.r,PersistenceStruct.g,PersistenceStruct.b,PersistenceStruct.brightness));
 }
 
 void handleForm() {
@@ -100,7 +124,10 @@ void handleForm() {
     fill_solid (leds, NUM_LEDS, CRGB(r,g,b));
     FastLED.show();
 
-  Serial.println(message);
+    // persist values
+    eeprom_persist(r,g,b,bb);
+
+    Serial.println(message);
 
     // redirect to home page
     server.sendHeader("Location","/");
@@ -109,14 +136,12 @@ void handleForm() {
 }
 
 void parseColor(String color, int& r, int&g, int&b){
-  Serial.println("string to parse: " + color);
   int parsedColors[] = {0,0,0};
   char buff[3];
   for(int i=0; i<3;i++){
     // offset is always 1 as we start with (#)
     int start = 1 + i*2;
     String substr = color.substring(start, start +2);
-    Serial.println("parsing " +substr);
     substr.toCharArray(buff,sizeof(buff));
     parsedColors[i] = strtol(buff,0,16);
   }
@@ -169,6 +194,8 @@ void setup(void) {
   pinMode(led, OUTPUT);
   digitalWrite(led, 0);
   Serial.begin(115200);
+  Serial.println("");
+  eeprom_setup();
   
   WiFi.begin(ssid, password);
   Serial.println("");
@@ -189,6 +216,11 @@ void setup(void) {
   if (MDNS.begin("esp8266")) {
     Serial.println("MDNS responder started");
   }
+
+  // setup leds with values from eeprom
+  FastLED.setBrightness(PersistenceStruct.brightness);
+  fill_solid (leds, NUM_LEDS, CRGB(PersistenceStruct.r,PersistenceStruct.g,PersistenceStruct.b));
+  FastLED.show();
 
   server.on("/", handleRoot);
 
