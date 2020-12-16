@@ -34,69 +34,69 @@ ESP8266WebServer server(80);
 
 const int led = LED_BUILTIN;
 
-String createIndexPage(char r, char g, char b, char brightness){
+String createIndexPage(char r, char g, char b, char brightness) {
   char buff[2];
   String postForms = "<html>\n"
-"\n"
-"<head>\n"
-"    <title>ESP8266 Web Server POST handling</title>\n"
-"    <style>\n"
-"        body {\n"
-"            background-color: #cccccc;\n"
-"            font-family: Arial, Helvetica, Sans-Serif;\n"
-"            Color: #000088;\n"
-"        }\n"
-"    </style>\n"
-"</head>\n"
-"\n"
-"<body>\n"
-"\n"
-"    <h1>Controlling the led</h1><br>\n"
-"    <form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"/postform/\" id=\"form\">\n"
-"        <label for=\"brightness\">brightness:</label><br>\n"
-"        <div>\n"
-"            <input id=\"brightness\" type=\"range\" min=\"1\" max=\"255\" name=\"brightness\" value=\"";
-  sprintf(buff,"%02x", brightness);
+                     "\n"
+                     "<head>\n"
+                     "    <title>ESP8266 Web Server POST handling</title>\n"
+                     "    <style>\n"
+                     "        body {\n"
+                     "            background-color: #cccccc;\n"
+                     "            font-family: Arial, Helvetica, Sans-Serif;\n"
+                     "            Color: #000088;\n"
+                     "        }\n"
+                     "    </style>\n"
+                     "</head>\n"
+                     "\n"
+                     "<body>\n"
+                     "\n"
+                     "    <h1>Controlling the led</h1><br>\n"
+                     "    <form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"/postform/\" id=\"form\">\n"
+                     "        <label for=\"brightness\">brightness:</label><br>\n"
+                     "        <div>\n"
+                     "            <input id=\"brightness\" type=\"range\" min=\"1\" max=\"255\" name=\"brightness\" value=\"";
+  sprintf(buff, "%02x", brightness);
   postForms.concat(buff);
   postForms.concat("\"><br>\n");
 
-postForms.concat("        </div>\n"
-"\n"
-"        <label for=\"color\">Color:</label><br>\n"
-"        <div>\n"
-"            <input id=\"color\" type=\"color\" name=\"color\" value=\"#");
-  sprintf(buff,"%02x", r);
+  postForms.concat("        </div>\n"
+                   "\n"
+                   "        <label for=\"color\">Color:</label><br>\n"
+                   "        <div>\n"
+                   "            <input id=\"color\" type=\"color\" name=\"color\" value=\"#");
+  sprintf(buff, "%02x", r);
   postForms.concat(buff);
-  sprintf(buff,"%02x", g);
+  sprintf(buff, "%02x", g);
   postForms.concat(buff);
-  sprintf(buff,"%02x", b);
+  sprintf(buff, "%02x", b);
   postForms.concat(buff);
 
-postForms.concat("\">\n"
-"        </div>\n"
-"    </form>\n"
-"</body>\n"
-"\n"
-"<script>\n"
-"    var slider = document.getElementById(\"brightness\");\n"
-"    var colorpicker = document.getElementById(\"color\");\n"
-"\n"
-"    slider.onmouseup = function(){\n"
-"        console.log(\"brightness changed\")\n"
-"        document.getElementById(\"form\").submit();\n"
-"    }\n"
-"    colorpicker.onchange = function(){\n"
-"        console.log(\"colorpicker changed\");\n"
-"        document.getElementById(\"form\").submit();\n"
-"    }\n"
-"</script>\n"
-"\n"
-"</html>");
-return postForms;
+  postForms.concat("\">\n"
+                   "        </div>\n"
+                   "    </form>\n"
+                   "</body>\n"
+                   "\n"
+                   "<script>\n"
+                   "    var slider = document.getElementById(\"brightness\");\n"
+                   "    var colorpicker = document.getElementById(\"color\");\n"
+                   "\n"
+                   "    slider.onmouseup = function(){\n"
+                   "        console.log(\"brightness changed\")\n"
+                   "        document.getElementById(\"form\").submit();\n"
+                   "    }\n"
+                   "    colorpicker.onchange = function(){\n"
+                   "        console.log(\"colorpicker changed\");\n"
+                   "        document.getElementById(\"form\").submit();\n"
+                   "    }\n"
+                   "</script>\n"
+                   "\n"
+                   "</html>");
+  return postForms;
 }
 
 void handleRoot() {
-  server.send(200, "text/html", createIndexPage(PersistenceStruct.r,PersistenceStruct.g,PersistenceStruct.b,PersistenceStruct.brightness));
+  server.send(200, "text/html", createIndexPage(PersistenceStruct.r, PersistenceStruct.g, PersistenceStruct.b, PersistenceStruct.brightness));
 }
 
 void handleForm() {
@@ -106,10 +106,10 @@ void handleForm() {
     String message = "POST form was:\n";
     String color = "no color";
 
-    int r,g,b,bb = 0;
-    
+    int r, g, b, bb = 0;
+
     for (uint8_t i = 0; i < server.args(); i++) {
-      if(server.argName(i) == "brightness") {
+      if (server.argName(i) == "brightness") {
         bb = server.arg(i).toInt();
       } else if (server.argName(i) == "color") {
         color = server.arg(i);
@@ -117,37 +117,37 @@ void handleForm() {
       message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
     }
 
-    parseColor(color,r,g,b);
+    parseColor(color, r, g, b);
 
     // update the leds
     FastLED.setBrightness(bb);
-    fill_solid (leds, NUM_LEDS, CRGB(r,g,b));
+    fill_solid (leds, NUM_LEDS, CRGB(r, g, b));
     FastLED.show();
 
     // persist values
-    eeprom_persist(r,g,b,bb);
+    eeprom_persist(r, g, b, bb);
 
     Serial.println(message);
 
     // redirect to home page
-    server.sendHeader("Location","/");
+    server.sendHeader("Location", "/");
     server.send(303);//
   }
 }
 
-void parseColor(String color, int& r, int&g, int&b){
-  int parsedColors[] = {0,0,0};
+void parseColor(String color, int& r, int&g, int&b) {
+  int parsedColors[] = {0, 0, 0};
   char buff[3];
-  for(int i=0; i<3;i++){
+  for (int i = 0; i < 3; i++) {
     // offset is always 1 as we start with (#)
-    int start = 1 + i*2;
-    String substr = color.substring(start, start +2);
-    substr.toCharArray(buff,sizeof(buff));
-    parsedColors[i] = strtol(buff,0,16);
+    int start = 1 + i * 2;
+    String substr = color.substring(start, start + 2);
+    substr.toCharArray(buff, sizeof(buff));
+    parsedColors[i] = strtol(buff, 0, 16);
   }
-  r=parsedColors[0];
-  g=parsedColors[1];
-  b=parsedColors[2];
+  r = parsedColors[0];
+  g = parsedColors[1];
+  b = parsedColors[2];
 }
 
 void handleNotFound() {
@@ -175,13 +175,13 @@ void setupLed(void) {
 void wifiConnected(void) {
   const int maxBrightness = 150;
   fill_solid (leds, NUM_LEDS, CRGB::Green);
-  for(int i=0; i<maxBrightness;i++) {
+  for (int i = 0; i < maxBrightness; i++) {
     FastLED.setBrightness(i);
     FastLED.show();
     delay(1);
   }
-  for(int i=0; i<maxBrightness;i++) {
-    FastLED.setBrightness(maxBrightness-i);
+  for (int i = 0; i < maxBrightness; i++) {
+    FastLED.setBrightness(maxBrightness - i);
     FastLED.show();
     delay(1);
   }
@@ -196,7 +196,7 @@ void setup(void) {
   Serial.begin(115200);
   Serial.println("");
   eeprom_setup();
-  
+
   WiFi.begin(ssid, password);
   Serial.println("");
 
@@ -219,7 +219,7 @@ void setup(void) {
 
   // setup leds with values from eeprom
   FastLED.setBrightness(PersistenceStruct.brightness);
-  fill_solid (leds, NUM_LEDS, CRGB(PersistenceStruct.r,PersistenceStruct.g,PersistenceStruct.b));
+  fill_solid (leds, NUM_LEDS, CRGB(PersistenceStruct.r, PersistenceStruct.g, PersistenceStruct.b));
   FastLED.show();
 
   server.on("/", handleRoot);
