@@ -2,10 +2,14 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
-
 #include <AUnit.h>
-
 #include <EEPROM.h>
+
+#include <ESP8266HTTPUpdateServer.h>
+
+// local libraries
+#include "led.h"
+
 struct {
   char r;
   char g;
@@ -13,14 +17,8 @@ struct {
   char brightness;
 } PersistenceStruct;
 
-#include "FastLED.h"
-// Fastled constants
-#define DATA_PIN    2
-#define COLOR_ORDER GRB
-#define NUM_LEDS    300
-#define LED_TYPE    WS2812B
-#define BRIGHTNESS  64
-CRGB leds[NUM_LEDS];
+
+
 
 #ifndef STASSID
 #define STASSID "rswireless"
@@ -31,6 +29,8 @@ const char* ssid     = STASSID;
 const char* password = STAPSK;
 
 ESP8266WebServer server(80);
+ESP8266HTTPUpdateServer httpUpdater;
+LedController ledController;
 
 const int led = LED_BUILTIN;
 
@@ -144,9 +144,7 @@ void handleForm() {
     parseColor(color, r, g, b);
 
     // update the leds
-    FastLED.setBrightness(bb);
-    fill_solid (leds, NUM_LEDS, CRGB(r, g, b));
-    FastLED.show();
+    ledController.show(r,g,b,bb);
 
     // persist values
     eeprom_persist(r, g, b, bb);
@@ -189,32 +187,8 @@ void handleNotFound() {
   server.send(404, "text/plain", message);
 }
 
-void setupLed(void) {
-  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
-  FastLED.setCorrection( TypicalLEDStrip );
-  FastLED.setBrightness( BRIGHTNESS );
-  FastLED.clear();
-}
-
-void wifiConnected(void) {
-  const int maxBrightness = 150;
-  fill_solid (leds, NUM_LEDS, CRGB::Green);
-  for (int i = 0; i < maxBrightness; i++) {
-    FastLED.setBrightness(i);
-    FastLED.show();
-    delay(1);
-  }
-  for (int i = 0; i < maxBrightness; i++) {
-    FastLED.setBrightness(maxBrightness - i);
-    FastLED.show();
-    delay(1);
-  }
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
-  FastLED.show();
-}
-
 void setup(void) {
-  setupLed();
+  ledController.setup();
   pinMode(led, OUTPUT);
   digitalWrite(led, 0);
   Serial.begin(115200);
@@ -235,16 +209,14 @@ void setup(void) {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
   digitalWrite(led, 1);
-  wifiConnected();
+  ledController.success();
 
   if (MDNS.begin("esp8266")) {
     Serial.println("MDNS responder started");
   }
 
   // setup leds with values from eeprom
-  FastLED.setBrightness(PersistenceStruct.brightness);
-  fill_solid (leds, NUM_LEDS, CRGB(PersistenceStruct.r, PersistenceStruct.g, PersistenceStruct.b));
-  FastLED.show();
+  ledController.show(PersistenceStruct.r, PersistenceStruct.g, PersistenceStruct.b,PersistenceStruct.brightness);
 
   server.on("/", handleRoot);
 
@@ -252,8 +224,10 @@ void setup(void) {
 
   server.onNotFound(handleNotFound);
 
+  httpUpdater.setup(&server);
   server.begin();
   Serial.println("HTTP server started");
+  Serial.printf("HTTPUpdateServer ready! Open http://%s/update in your browser\n", WiFi.localIP().toString().c_str());
 }
 
 void loop(void) {
