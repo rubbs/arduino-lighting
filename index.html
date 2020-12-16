@@ -1,0 +1,32 @@
+<html>
+
+<head>
+    <title>ESP8266 Web Server POST handling</title>
+    <style>
+        body {
+            background-color: #cccccc;
+            font-family: Arial, Helvetica, Sans-Serif;
+            Color: #000088;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Controlling the led</h1><br>
+    <form method="post" enctype="application/x-www-form-urlencoded" action="/postform/">
+        <label for="brightness">brightness:</label><br>
+        <div>
+            <input id="brightness" type="range" min="1" max="255" name="brightness" value="255"><br>
+        </div>
+
+        <label for="color">Color:</label><br>
+        <div>
+            <input id="color" type="color" name="color">
+        </div>
+
+        <input type="submit" value="Submit">
+    </form>
+</body>
+
+</html>

@@ -3,6 +3,8 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 
+#include <AUnit.h>
+
 #include "FastLED.h"
 // Fastled constants
 #define DATA_PIN    2
@@ -24,33 +26,38 @@ ESP8266WebServer server(80);
 
 const int led = LED_BUILTIN;
 
-const String postForms = "<html>\
-  <head>\
-    <title>ESP8266 Web Server POST handling</title>\
-    <style>\
-      body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }\
-    </style>\
-  </head>\
-  <body>\
-  \  
-    <h1>Controlling the led</h1><br>\
-    <form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"/postform/\">\
-      <label for=\"brightness\">brightness:</label><br>\
-      <input id=\"brightness\"type=\"number\" name=\"brightness\" value=\"255\"><br>\
-      \
-      <label for=\"r\">red:</label><br>\
-      <input id=\"r\"type=\"number\" name=\"r\" value=\"255\"><br>\ 
-      \
-      <label for=\"g\">green:</label><br>\
-      <input id=\"g\"type=\"number\" name=\"g\" value=\"255\"><br>\
-      \
-      <label for=\"b\">blue:</label><br>\
-      <input id=\"b\"type=\"number\" name=\"b\" value=\"255\"><br>\
-      \
-      <input type=\"submit\" value=\"Submit\">\
-    </form>\
-  </body>\
-</html>";
+const String postForms = "<html>\n"
+"\n"
+"<head>\n"
+"    <title>ESP8266 Web Server POST handling</title>\n"
+"    <style>\n"
+"        body {\n"
+"            background-color: #cccccc;\n"
+"            font-family: Arial, Helvetica, Sans-Serif;\n"
+"            Color: #000088;\n"
+"        }\n"
+"    </style>\n"
+"</head>\n"
+"\n"
+"<body>\n"
+"\n"
+"    <h1>Controlling the led</h1><br>\n"
+"    <form method=\"post\" enctype=\"application/x-www-form-urlencoded\" action=\"/postform/\">\n"
+"        <label for=\"brightness\">brightness:</label><br>\n"
+"        <div>\n"
+"            <input id=\"brightness\" type=\"range\" min=\"1\" max=\"255\" name=\"brightness\" value=\"255\"><br>\n"
+"        </div>\n"
+"\n"
+"        <label for=\"color\">Color:</label><br>\n"
+"        <div>\n"
+"            <input id=\"color\" type=\"color\" name=\"color\">\n"
+"        </div>\n"
+"\n"
+"        <input type=\"submit\" value=\"Submit\">\n"
+"    </form>\n"
+"</body>\n"
+"\n"
+"</html>";
 
 void handleRoot() {
   server.send(200, "text/html", postForms);
@@ -61,21 +68,20 @@ void handleForm() {
     server.send(405, "text/plain", "Method Not Allowed");
   } else {
     String message = "POST form was:\n";
+    String color = "no color";
 
     int r,g,b,bb = 0;
     
     for (uint8_t i = 0; i < server.args(); i++) {
       if(server.argName(i) == "brightness") {
         bb = server.arg(i).toInt();
-      } else if (server.argName(i) == "r") {
-        r = server.arg(i).toInt();
-      } else if (server.argName(i) == "g") {
-        g = server.arg(i).toInt();
-      } else if (server.argName(i) == "b") {
-        b = server.arg(i).toInt();
+      } else if (server.argName(i) == "color") {
+        color = server.arg(i);
       }
       message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
     }
+
+    parseColor(color,r,g,b);
 
     // update the leds
     FastLED.setBrightness(bb);
@@ -88,6 +94,23 @@ void handleForm() {
     server.sendHeader("Location","/");
     server.send(303);//
   }
+}
+
+void parseColor(String color, int& r, int&g, int&b){
+  Serial.println("string to parse: " + color);
+  int parsedColors[] = {0,0,0};
+  char buff[3];
+  for(int i=0; i<3;i++){
+    // offset is always 1 as we start with (#)
+    int start = 1 + i*2;
+    String substr = color.substring(start, start +2);
+    Serial.println("parsing " +substr);
+    substr.toCharArray(buff,sizeof(buff));
+    parsedColors[i] = strtol(buff,0,16);
+  }
+  r=parsedColors[0];
+  g=parsedColors[1];
+  b=parsedColors[2];
 }
 
 void handleNotFound() {
@@ -134,6 +157,7 @@ void setup(void) {
   pinMode(led, OUTPUT);
   digitalWrite(led, 0);
   Serial.begin(115200);
+  
   WiFi.begin(ssid, password);
   Serial.println("");
 
@@ -165,5 +189,6 @@ void setup(void) {
 }
 
 void loop(void) {
+  aunit::TestRunner::run(); // only run once
   server.handleClient();
 }
