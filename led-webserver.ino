@@ -39,7 +39,7 @@ const String postForms = "<html>\
       <input id=\"brightness\"type=\"number\" name=\"brightness\" value=\"255\"><br>\
       \
       <label for=\"r\">red:</label><br>\
-      <input id=\"r\"type=\"number\" name=\"r\" value=\"255\"><br>\
+      <input id=\"r\"type=\"number\" name=\"r\" value=\"255\"><br>\ 
       \
       <label for=\"g\">green:</label><br>\
       <input id=\"g\"type=\"number\" name=\"g\" value=\"255\"><br>\
@@ -81,8 +81,12 @@ void handleForm() {
     FastLED.setBrightness(bb);
     fill_solid (leds, NUM_LEDS, CRGB(r,g,b));
     FastLED.show();
-        
-    server.send(200, "text/plain", message);
+
+  Serial.println(message);
+
+    // redirect to home page
+    server.sendHeader("Location","/");
+    server.send(303);//
   }
 }
 
