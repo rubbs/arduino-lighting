@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>ESP8266 Web Server POST handling</title>
+    <title>Wohnzimmer</title>
     <style>
         body {
             font-family: Arial, Helvetica, Sans-Serif;
@@ -23,7 +23,6 @@
 
         /* Style inputs, select elements and textareas */
         input[type=range],
-        select,
         textarea {
             width: 100%;
             padding: 12px;
@@ -32,13 +31,37 @@
             box-sizing: border-box;
             resize: vertical;
         }
+
+        #color{
+            height: 44px;
+            border: none;
+            overflow: hidden;
+            background-color: #f2f2f2;
+        }
+        #color::-moz-focus-inner {
+            border: 0;
+        }
+        #color:focus {
+            outline: none;
+            }
+        #color option{
+            width: 80px;
+            font-size: 1.2em;
+            padding: 10px 0;
+            text-align: center;
+            margin-right: 20px;
+            display: inline-block;
+            cursor: pointer;
+            border-radius: 5px;
+            color: rgb(100, 100, 100);
+        }
     </style>
 </head>
 
 <body>
 
     <div class="container">
-        <h1>Controlling the led</h1><br>
+        <h1>Ambient</h1><br>
         <form method="post" enctype="application/x-www-form-urlencoded" action="/postform/" id="form">
             <label for="brightness">brightness:</label><br>
             <div>
@@ -47,7 +70,13 @@
 
             <label for="color">Color:</label><br>
             <div>
-                <input id="color" type="color" name="color">
+                <select name="color" id="color" multiple>
+                    <option style="background-color: #FFFFFF;" value="help">Weiß</option>
+                    <option style="background-color: #FFA500;" value="help">Abend</option>
+                    <option style="background-color: #0000FF;" value="help">Blau</option>
+                    <option style="background-color: #FF0000;" value="help">Rot</option>
+                    <option style="background-color: #00ff00;" value="help">Grün</option>
+                </select> 
             </div>
         </form>
     </div>
@@ -58,12 +87,12 @@
     var colorpicker = document.getElementById("color");
 
     slider.onchange = function () {
-        console.log("brightness changed")
-        // document.getElementById("form").submit();
+        console.log("brightness changed",document.getElementById("form"))
+        //document.getElementById("form").submit();
     }
     colorpicker.onchange = function () {
-        console.log("colorpicker changed");
-        // document.getElementById("form").submit();
+        console.log("colorpicker changed",document.getElementById("form"));
+        //document.getElementById("form").submit();
     }
 </script>
 

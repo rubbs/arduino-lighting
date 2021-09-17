@@ -2,7 +2,6 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
-#include <AUnit.h>
 #include <EEPROM.h>
 
 #include <ESP8266HTTPUpdateServer.h>
@@ -39,7 +38,7 @@ String createIndexPage(char r, char g, char b, char brightness) {
   String postForms = "<html>\n"
                      "\n"
                      "<head>\n"
-                     "    <title>ESP8266 Web Server POST handling</title>\n"
+                     "    <title>Wohnzimmer</title>\n"
                      "    <style>\n"
                      "        body {\n"
                      "            font-family: Arial, Helvetica, Sans-Serif;\n"
@@ -70,6 +69,39 @@ String createIndexPage(char r, char g, char b, char brightness) {
                      "            box-sizing: border-box;\n"
                      "            resize: vertical;\n"
                      "        }\n"
+                     "        /* Style inputs, select elements and textareas */\n"
+                     "        input[type=range],\n"
+                     "        textarea {\n"
+                     "        width: 100%;\n"
+                     "        padding: 12px;\n"
+                     "        border: 1px solid #ccc;\n"
+                     "        border-radius: 4px;\n"
+                     "        box-sizing: border-box;\n"
+                     "        resize: vertical;\n"
+                     "        }\n"
+                     "        #color{\n"
+                     "        height: 44px;\n"
+                     "        border: none;\n"
+                     "        overflow: hidden;\n"
+                     "        background-color: #f2f2f2;\n"
+                     "        }\n"
+                     "        #color::-moz-focus-inner {\n"
+                     "        border: 0;\n"
+                     "        }\n"
+                     "        #color:focus {\n"
+                     "        outline: none;\n"
+                     "        }\n"
+                     "        #color option{\n"
+                     "        width: 80px;\n"
+                     "        font-size: 1.2em;\n"
+                     "        padding: 10px 0;\n"
+                     "        text-align: center;\n"
+                     "        margin-right: 20px;\n"
+                     "        display: inline-block;\n"
+                     "        cursor: pointer;\n"
+                     "        border-radius: 5px;\n"
+                     "        color: rgb(100, 100, 100);\n"
+                     "        }\n"
                      "    </style>"
                      "</head>\n"
                      "\n"
@@ -88,15 +120,13 @@ String createIndexPage(char r, char g, char b, char brightness) {
                    "\n"
                    "        <label for=\"color\">Color:</label><br>\n"
                    "        <div>\n"
-                   "            <input id=\"color\" type=\"color\" name=\"color\" value=\"#");
-  sprintf(buff, "%02x", r);
-  postForms.concat(buff);
-  sprintf(buff, "%02x", g);
-  postForms.concat(buff);
-  sprintf(buff, "%02x", b);
-  postForms.concat(buff);
-
-  postForms.concat("\">\n"
+                   "                            <select name=\"color\" id=\"color\" multiple>\n"
+                   " <option style=\"background-color: #FFFFFF;\" value=\"#FFFFFF\">Weiß</option>\n"
+                   " <option style=\"background-color: #FFA500;\" value=\"#FFA500\">Abend</option>\n"
+                   " <option style=\"background-color: #0000FF;\" value=\"#0000FF\">Blau</option>\n"
+                   " <option style=\"background-color: #FF0000;\" value=\"#FF0000\">Rot</option>\n"
+                   " <option style=\"background-color: #00ff00;\" value=\"#00ff00\">Grün</option>\n"
+                   "  </select>\n"
                    "        </div>\n"
                    "    </form>\n"
                    "</body>\n"
@@ -194,7 +224,10 @@ void setup(void) {
   Serial.begin(115200);
   Serial.println("");
   eeprom_setup();
+  // setup leds with values from eeprom
+  ledController.show(PersistenceStruct.r, PersistenceStruct.g, PersistenceStruct.b,PersistenceStruct.brightness);
 
+  WiFi.hostname("wohnzimmer");
   WiFi.begin(ssid, password);
   Serial.println("");
 
@@ -210,13 +243,12 @@ void setup(void) {
   Serial.println(WiFi.localIP());
   digitalWrite(led, 1);
   ledController.success();
+  
+  ledController.show(PersistenceStruct.r, PersistenceStruct.g, PersistenceStruct.b,PersistenceStruct.brightness);
 
   if (MDNS.begin("esp8266")) {
     Serial.println("MDNS responder started");
   }
-
-  // setup leds with values from eeprom
-  ledController.show(PersistenceStruct.r, PersistenceStruct.g, PersistenceStruct.b,PersistenceStruct.brightness);
 
   server.on("/", handleRoot);
 
@@ -231,6 +263,6 @@ void setup(void) {
 }
 
 void loop(void) {
-  aunit::TestRunner::run(); // only run once
+  //aunit::TestRunner::run(); // only run once
   server.handleClient();
 }
